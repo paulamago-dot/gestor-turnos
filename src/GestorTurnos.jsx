@@ -177,55 +177,117 @@ function LoginScreen({ onLogin, darkMode, toggleDark }) {
     if (u) onLogin(u); else setErr("Usuario o contraseña incorrectos");
   };
 
-  // Mobile: full-screen form flush to edges, no card border
-  // Desktop: centered floating card
+  // ── Palette that reacts to darkMode ──────────────────────────────────────────
+  const lp = darkMode ? {
+    outerBg:   "linear-gradient(160deg,#0f172a 0%,#1e3558 60%,#0f172a 100%)",
+    sheetBg:   "rgba(255,255,255,0.03)",
+    sheetBrd:  "rgba(255,255,255,0.08)",
+    cardBg:    "rgba(255,255,255,0.05)",
+    cardBrd:   "rgba(255,255,255,0.1)",
+    inputBg:   "rgba(255,255,255,0.07)",
+    inputBrd:  "rgba(255,255,255,0.15)",
+    inputClr:  "white",
+    labelClr:  "#94a3b8",
+    titleClr:  "white",
+    divBrd:    "rgba(255,255,255,0.08)",
+    demoLbl:   "#475569",
+    demoBg:    "rgba(255,255,255,0.04)",
+    demoBrd:   "rgba(255,255,255,0.08)",
+    demoClr:   "#94a3b8",
+    toggleBg:  "rgba(255,255,255,0.12)",
+    versionClr:"#334155",
+    logoFilter:"drop-shadow(0 4px 12px rgba(0,0,0,0.5))",
+  } : {
+    outerBg:   "linear-gradient(160deg,#dbeafe 0%,#f0f9ff 60%,#e0f2fe 100%)",
+    sheetBg:   "white",
+    sheetBrd:  "#e2e8f0",
+    cardBg:    "white",
+    cardBrd:   "#cbd5e1",
+    inputBg:   "white",
+    inputBrd:  "#cbd5e1",
+    inputClr:  "#0f172a",
+    labelClr:  "#64748b",
+    titleClr:  "#0f172a",
+    divBrd:    "#e2e8f0",
+    demoLbl:   "#64748b",
+    demoBg:    "#f8fafc",
+    demoBrd:   "#e2e8f0",
+    demoClr:   "#475569",
+    toggleBg:  "rgba(0,0,0,0.07)",
+    versionClr:"#94a3b8",
+    logoFilter:"drop-shadow(0 4px 12px rgba(0,0,0,0.15))",
+  };
+
   const inputStyle = {
-    background:"rgba(255,255,255,0.07)", border:"1px solid rgba(255,255,255,0.15)",
-    color:"white", width:"100%", borderRadius:12, padding:"13px 14px",
+    background:lp.inputBg, border:`1px solid ${lp.inputBrd}`,
+    color:lp.inputClr, width:"100%", borderRadius:12, padding:"13px 14px",
     fontSize:16, outline:"none", boxSizing:"border-box",
   };
 
-  // Shared hero block used in both layouts
+  const ToggleBtn = ({ absolute }) => (
+    <button onClick={toggleDark}
+      style={{
+        ...(absolute ? {position:"absolute",top:14,right:16,zIndex:10} : {}),
+        background:lp.toggleBg, border:"none", borderRadius:10,
+        padding:"8px 12px", fontSize:18, cursor:"pointer", lineHeight:1,
+      }}>
+      {darkMode ? '☀️' : '🌙'}
+    </button>
+  );
+
   const Hero = ({ large }) => (
     <div style={{textAlign:"center"}}>
       <img src="/logo.svg" alt="Instituciones Penitenciarias"
-        style={{width:large?90:72,height:"auto",margin:"0 auto 14px",display:"block",
-          filter:"drop-shadow(0 4px 12px rgba(0,0,0,0.5))"}}/>
-      <h1 style={{color:"white",fontSize:large?26:22,fontWeight:900,margin:0,letterSpacing:-0.3,lineHeight:1.2}}>
+        style={{width:large?90:72, height:"auto", margin:"0 auto 14px", display:"block",
+          filter:lp.logoFilter}}/>
+      <h1 style={{color:lp.titleClr, fontSize:large?26:22, fontWeight:900, margin:0, letterSpacing:-0.3, lineHeight:1.2}}>
         Sistema de Gestión<br/>de Guardias
       </h1>
-      <p style={{color:"#c8a94a",fontSize:large?14:13,margin:"8px 0 0",fontWeight:600,letterSpacing:0.3}}>
+      <p style={{color:"#c8a94a", fontSize:large?14:13, margin:"8px 0 0", fontWeight:600, letterSpacing:0.3}}>
         CIS Joaquín Ruíz-Giménez Cortés
       </p>
     </div>
   );
 
+  const DemoButtons = () => (
+    <div style={{borderTop:`1px solid ${lp.divBrd}`, paddingTop:mob?20:16}}>
+      <p style={{color:lp.demoLbl, fontSize:mob?12:11, textAlign:"center", marginBottom:mob?12:10}}>
+        Cuentas de demostración
+      </p>
+      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:mob?8:6}}>
+        {[{l:"Admin",e:"admin",p:"admin"},{l:"Ana – G1",e:"ana",p:"1234"},
+          {l:"David – G3",e:"david",p:"1234"},{l:"Raúl – G5",e:"raul",p:"1234"}].map(a=>(
+          <button key={a.e}
+            style={{background:lp.demoBg, border:`1px solid ${lp.demoBrd}`,
+              borderRadius:12, padding:mob?"12px 10px":"8px 10px",
+              color:lp.demoClr, fontSize:mob?14:12, cursor:"pointer",
+              textAlign:"center", width:"100%"}}
+            onClick={()=>{setEmail(a.e);setPwd(a.p);}}>
+            {a.l}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
   if (mob) {
     return (
-      <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0f172a 0%,#1e3558 60%,#0f172a 100%)",
-        display:"flex",flexDirection:"column",boxSizing:"border-box",
-        padding:"0 0 env(safe-area-inset-bottom,0px)"}}>
+      <div style={{minHeight:"100vh", background:lp.outerBg,
+        display:"flex", flexDirection:"column", boxSizing:"border-box",
+        padding:"0 0 env(safe-area-inset-bottom,0px)", position:"relative"}}>
 
-        {/* Theme toggle top-right */}
-        <div style={{position:"absolute",top:12,right:16,zIndex:10}}>
-          <button onClick={toggleDark}
-            style={{background:"rgba(255,255,255,0.1)",border:"none",borderRadius:10,
-              padding:"8px 12px",fontSize:18,cursor:"pointer",lineHeight:1}}>
-            {darkMode ? '☀️' : '🌙'}
-          </button>
-        </div>
+        <ToggleBtn absolute/>
 
-        {/* Hero header */}
         <div style={{padding:"40px 24px 28px"}}>
           <Hero large={true}/>
         </div>
 
-        {/* Form fills rest of screen */}
-        <div style={{flex:1,background:"rgba(255,255,255,0.03)",borderTop:"1px solid rgba(255,255,255,0.08)",
-          borderRadius:"24px 24px 0 0",padding:"28px 24px 24px",display:"flex",flexDirection:"column",gap:0}}>
+        <div style={{flex:1, background:lp.sheetBg, borderTop:`1px solid ${lp.sheetBrd}`,
+          borderRadius:"24px 24px 0 0", padding:"28px 24px 24px",
+          display:"flex", flexDirection:"column"}}>
 
           <div style={{marginBottom:18}}>
-            <label style={{color:"#94a3b8",fontSize:12,fontWeight:700,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:8}}>
+            <label style={{color:lp.labelClr,fontSize:12,fontWeight:700,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:8}}>
               Usuario
             </label>
             <input style={inputStyle} value={email}
@@ -234,7 +296,7 @@ function LoginScreen({ onLogin, darkMode, toggleDark }) {
           </div>
 
           <div style={{marginBottom:18}}>
-            <label style={{color:"#94a3b8",fontSize:12,fontWeight:700,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:8}}>
+            <label style={{color:lp.labelClr,fontSize:12,fontWeight:700,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:8}}>
               Contraseña
             </label>
             <input type="password" style={inputStyle} value={pwd}
@@ -251,73 +313,49 @@ function LoginScreen({ onLogin, darkMode, toggleDark }) {
             Acceder al sistema
           </button>
 
-          <div style={{borderTop:"1px solid rgba(255,255,255,0.08)",paddingTop:20}}>
-            <p style={{color:"#475569",fontSize:12,textAlign:"center",marginBottom:12}}>Cuentas de demostración</p>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-              {[{l:"Admin",e:"admin",p:"admin"},{l:"Ana – G1",e:"ana",p:"1234"},
-                {l:"David – G3",e:"david",p:"1234"},{l:"Raúl – G5",e:"raul",p:"1234"}].map(a=>(
-                <button key={a.e}
-                  style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",
-                    borderRadius:12,padding:"12px 10px",color:"#94a3b8",fontSize:14,cursor:"pointer",textAlign:"center",width:"100%"}}
-                  onClick={()=>{setEmail(a.e);setPwd(a.p);}}>
-                  {a.l}
-                </button>
-              ))}
-            </div>
-          </div>
+          <DemoButtons/>
 
-          <p style={{color:"#334155",fontSize:11,textAlign:"center",margin:"20px 0 0"}}>v {__BUILD_DATE__}</p>
+          <p style={{color:lp.versionClr,fontSize:11,textAlign:"center",margin:"20px 0 0"}}>v {__BUILD_DATE__}</p>
         </div>
       </div>
     );
   }
 
-  // ── Desktop layout ──
+  // ── Desktop ──
   return (
-    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0f172a 0%,#1e3558 60%,#0f172a 100%)",
-      display:"flex",alignItems:"center",justifyContent:"center",padding:24,position:"relative"}}>
-      <button onClick={toggleDark}
-        style={{position:"absolute",top:16,right:16,background:"rgba(255,255,255,0.1)",border:"none",
-          borderRadius:10,padding:"8px 12px",fontSize:20,cursor:"pointer",lineHeight:1}}>
-        {darkMode ? '☀️' : '🌙'}
-      </button>
-      <div style={{width:"100%",maxWidth:420}}>
+    <div style={{minHeight:"100vh", background:lp.outerBg,
+      display:"flex", alignItems:"center", justifyContent:"center",
+      padding:24, position:"relative"}}>
+      <ToggleBtn absolute/>
+      <div style={{width:"100%", maxWidth:420}}>
         <div style={{marginBottom:28}}>
           <Hero large={false}/>
         </div>
-        <div style={{background:"rgba(255,255,255,0.05)",backdropFilter:"blur(20px)",
-          border:"1px solid rgba(255,255,255,0.1)",borderRadius:20,padding:"28px 28px 32px"}}>
+        <div style={{background:lp.cardBg, backdropFilter:"blur(20px)",
+          border:`1px solid ${lp.cardBrd}`, borderRadius:20, padding:"28px 28px 32px",
+          boxShadow:darkMode?"none":"0 8px 32px rgba(0,0,0,0.08)"}}>
           <div style={{marginBottom:16}}>
-            <label style={{color:"#94a3b8",fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:6}}>Usuario</label>
+            <label style={{color:lp.labelClr,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:6}}>
+              Usuario
+            </label>
             <input style={inputStyle} value={email} onChange={e=>{setEmail(e.target.value);setErr("");}}
               placeholder="Tu usuario de acceso" autoCapitalize="none" autoCorrect="off"/>
           </div>
           <div style={{marginBottom:16}}>
-            <label style={{color:"#94a3b8",fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:6}}>Contraseña</label>
+            <label style={{color:lp.labelClr,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:6}}>
+              Contraseña
+            </label>
             <input type="password" style={inputStyle} value={pwd}
               onChange={e=>{setPwd(e.target.value);setErr("");}}
               onKeyDown={e=>e.key==="Enter"&&handle()}
               placeholder="••••••••"/>
           </div>
           {err && <p style={{color:"#f87171",fontSize:13,textAlign:"center",margin:"0 0 8px"}}>{err}</p>}
-          <button style={{background:"linear-gradient(135deg,#f59e0b,#ef4444)",width:"100%",border:"none",borderRadius:12,
-            padding:"14px 0",color:"white",fontWeight:700,fontSize:16,cursor:"pointer",marginTop:8}}
+          <button style={{background:"linear-gradient(135deg,#f59e0b,#ef4444)",width:"100%",border:"none",
+            borderRadius:12,padding:"14px 0",color:"white",fontWeight:700,fontSize:16,cursor:"pointer",marginTop:8}}
             onClick={handle}>Acceder al sistema</button>
-          <div style={{borderTop:"1px solid rgba(255,255,255,0.08)",marginTop:20,paddingTop:16}}>
-            <p style={{color:"#475569",fontSize:11,textAlign:"center",marginBottom:10}}>Cuentas de demostración</p>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-              {[{l:"Admin",e:"admin",p:"admin"},{l:"Ana – G1",e:"ana",p:"1234"},
-                {l:"David – G3",e:"david",p:"1234"},{l:"Raúl – G5",e:"raul",p:"1234"}].map(a=>(
-                <button key={a.e}
-                  style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",
-                    borderRadius:10,padding:"8px 10px",color:"#64748b",fontSize:12,cursor:"pointer",textAlign:"left",width:"100%"}}
-                  onClick={()=>{setEmail(a.e);setPwd(a.p);}}>
-                  {a.l}
-                </button>
-              ))}
-            </div>
-          </div>
-          <p style={{color:"#334155",fontSize:11,textAlign:"center",margin:"16px 0 0"}}>v {__BUILD_DATE__}</p>
+          <DemoButtons/>
+          <p style={{color:lp.versionClr,fontSize:11,textAlign:"center",margin:"16px 0 0"}}>v {__BUILD_DATE__}</p>
         </div>
       </div>
     </div>
