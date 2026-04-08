@@ -1,5 +1,39 @@
 import { useState, useEffect, useMemo } from "react";
 
+// ─── THEMES ───────────────────────────────────────────────────────────────────
+const THEME = {
+  light: {
+    pageBg:    "#f8fafc",
+    cardBg:    "white",
+    cardBrd:   "#e5e7eb",
+    inputBg:   "white",
+    inputBrd:  "#e5e7eb",
+    textPri:   "#0f172a",
+    textSec:   "#64748b",
+    textMut:   "#94a3b8",
+    cellBg:    "white",
+    freeBg:    "#f9fafb",
+    cellBrd:   "#e5e7eb",
+    rowBg:     "#f8fafc",
+    rowBrd:    "#f1f5f9",
+  },
+  dark: {
+    pageBg:    "#0f172a",
+    cardBg:    "#1e293b",
+    cardBrd:   "#334155",
+    inputBg:   "#0f172a",
+    inputBrd:  "#475569",
+    textPri:   "#f1f5f9",
+    textSec:   "#94a3b8",
+    textMut:   "#64748b",
+    cellBg:    "#1e293b",
+    freeBg:    "#0f172a",
+    cellBrd:   "#334155",
+    rowBg:     "#1e293b",
+    rowBrd:    "#334155",
+  },
+};
+
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 const SI = {
   M: { l: "Mañana",  h: "07:30–14:30", c: "#d97706", bg: "#fef9ee", sbg: "#fde68a", t: "#78350f" },
@@ -127,7 +161,7 @@ function StatusDot({ color }) {
 }
 
 // ─── LOGIN ────────────────────────────────────────────────────────────────────
-function LoginScreen({ onLogin }) {
+function LoginScreen({ onLogin, darkMode, toggleDark }) {
   const [email, setEmail] = useState("");
   const [pwd, setPwd]     = useState("");
   const [err, setErr]     = useState("");
@@ -171,6 +205,15 @@ function LoginScreen({ onLogin }) {
       <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0f172a 0%,#1e3558 60%,#0f172a 100%)",
         display:"flex",flexDirection:"column",boxSizing:"border-box",
         padding:"0 0 env(safe-area-inset-bottom,0px)"}}>
+
+        {/* Theme toggle top-right */}
+        <div style={{position:"absolute",top:12,right:16,zIndex:10}}>
+          <button onClick={toggleDark}
+            style={{background:"rgba(255,255,255,0.1)",border:"none",borderRadius:10,
+              padding:"8px 12px",fontSize:18,cursor:"pointer",lineHeight:1}}>
+            {darkMode ? '☀️' : '🌙'}
+          </button>
+        </div>
 
         {/* Hero header */}
         <div style={{padding:"40px 24px 28px"}}>
@@ -232,7 +275,12 @@ function LoginScreen({ onLogin }) {
   // ── Desktop layout ──
   return (
     <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0f172a 0%,#1e3558 60%,#0f172a 100%)",
-      display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
+      display:"flex",alignItems:"center",justifyContent:"center",padding:24,position:"relative"}}>
+      <button onClick={toggleDark}
+        style={{position:"absolute",top:16,right:16,background:"rgba(255,255,255,0.1)",border:"none",
+          borderRadius:10,padding:"8px 12px",fontSize:20,cursor:"pointer",lineHeight:1}}>
+        {darkMode ? '☀️' : '🌙'}
+      </button>
       <div style={{width:"100%",maxWidth:420}}>
         <div style={{marginBottom:28}}>
           <Hero large={false}/>
@@ -706,12 +754,11 @@ function OfferBuilderModal({ req, fromUser, currentUser, users, userWorksShift, 
   );
 }
 
-function ExtraShiftForm({ users, onAdd, isMobile }) {
+function ExtraShiftForm({ users, onAdd, isMobile, inp }) {
   const [uid, setUid] = useState("");
   const [date, setDate] = useState("");
   const [shift, setShift] = useState("M");
   const [comp, setComp] = useState("economic");
-  const inp = {border:"1px solid #e5e7eb",borderRadius:10,padding:"8px 12px",fontSize:13,outline:"none",background:"white"};
   return (
     <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"1fr 1fr 80px 120px",gap:8,marginBottom:12}}>
       <select value={uid} onChange={e=>setUid(e.target.value)} style={{...inp,gridColumn:isMobile?"1/-1":undefined}}>
@@ -734,10 +781,9 @@ function ExtraShiftForm({ users, onAdd, isMobile }) {
   );
 }
 
-function SupplementForm({ onAdd, isMobile }) {
+function SupplementForm({ onAdd, isMobile, inp }) {
   const [date,setDate]=useState(""); const [shift,setShift]=useState("M");
   const [amount,setAmount]=useState(""); const [note,setNote]=useState("");
-  const inp = {border:"1px solid #e5e7eb",borderRadius:10,padding:"8px 12px",fontSize:13,outline:"none",background:"white"};
   return (
     <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"1fr 80px 100px 1fr",gap:8,marginBottom:12}}>
       <input type="date" value={date} onChange={e=>setDate(e.target.value)} style={inp}/>
@@ -757,6 +803,14 @@ function SupplementForm({ onAdd, isMobile }) {
 // ─── LOGIN SHELL — shared state lives here so it survives user switches ───────
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('gt-theme') === 'dark');
+
+  function toggleDark() {
+    setDarkMode(d => {
+      localStorage.setItem('gt-theme', !d ? 'dark' : 'light');
+      return !d;
+    });
+  }
 
   // ── SHARED STATE (persists across logins) ──
   const [users, setUsers]             = useState(INIT_USERS);
@@ -768,11 +822,12 @@ export default function App() {
   const [supplements, setSupplements] = useState([]);
   const [notifs, setNotifs]           = useState([]);
 
-  if (!currentUser) return <LoginScreen onLogin={u => setCurrentUser(u)} />;
+  if (!currentUser) return <LoginScreen onLogin={u => setCurrentUser(u)} darkMode={darkMode} toggleDark={toggleDark}/>;
   return (
     <MainApp
       currentUser={currentUser}
       onLogout={() => setCurrentUser(null)}
+      darkMode={darkMode} toggleDark={toggleDark}
       users={users} setUsers={setUsers}
       pending={pending} setPending={setPending}
       absences={absences} setAbsences={setAbsences}
@@ -791,7 +846,8 @@ function MainApp({ currentUser, onLogout,
   absences, setAbsences, swaps, setSwaps,
   swapRequests, setSwapRequests,
   extraShifts, setExtraShifts, supplements, setSupplements,
-  notifs, setNotifs }) {
+  notifs, setNotifs,
+  darkMode, toggleDark }) {
 
   // Navigation
   const [view, setView]         = useState("cal-general");
@@ -958,10 +1014,11 @@ function MainApp({ currentUser, onLogout,
   }
 
   // ── STYLES ─────────────────────────────────────────────────────────────────
+  const T = THEME[darkMode ? 'dark' : 'light'];
   const sidebar = {width:210,background:"linear-gradient(180deg,#0f172a 0%,#1e3558 100%)",
     flexShrink:0,display:"flex",flexDirection:"column",minHeight:"100vh"};
-  const card = {background:"white",borderRadius:16,border:"1px solid #e5e7eb",padding:isMobile?14:20};
-  const inp  = {border:"1px solid #e5e7eb",borderRadius:10,padding:"8px 12px",fontSize:13,outline:"none",background:"white",width:"100%",boxSizing:"border-box"};
+  const card = {background:T.cardBg,borderRadius:16,border:`1px solid ${T.cardBrd}`,padding:isMobile?14:20};
+  const inp  = {border:`1px solid ${T.inputBrd}`,borderRadius:10,padding:"8px 12px",fontSize:13,outline:"none",background:T.inputBg,color:T.textPri,width:"100%",boxSizing:"border-box"};
 
   // ─── RENDER VIEWS ──────────────────────────────────────────────────────────
 
@@ -969,7 +1026,7 @@ function MainApp({ currentUser, onLogout,
     return (
       <div>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
-          <h2 style={{margin:0,fontSize:20,fontWeight:900,color:"#0f172a"}}>Calendario General</h2>
+          <h2 style={{margin:0,fontSize:20,fontWeight:900,color:T.textPri}}>Calendario General</h2>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             <button onClick={prevMonth} style={{width:isMobile?44:32,height:isMobile?44:32,borderRadius:"50%",background:"#f1f5f9",border:"none",cursor:"pointer",fontSize:isMobile?20:16,display:"flex",alignItems:"center",justifyContent:"center"}}>‹</button>
             <span style={{fontWeight:700,color:"#334155",width:isMobile?150:130,textAlign:"center",fontSize:isMobile?15:14}}>{MONTHS[calM]} {calY}</span>
@@ -1000,8 +1057,8 @@ function MainApp({ currentUser, onLogout,
             }).filter(x=>x.total>0);
 
             return (
-              <div key={day} style={{border:isToday?`2px solid #f59e0b`:"1px solid #e5e7eb",
-                borderRadius:isMobile?8:12,padding:isMobile?"4px 3px":"6px 5px",minHeight:isMobile?68:80,background:isToday?"#fffbeb":"white"}}>
+              <div key={day} style={{border:isToday?`2px solid #f59e0b`:`1px solid ${T.cellBrd}`,
+                borderRadius:isMobile?8:12,padding:isMobile?"4px 3px":"6px 5px",minHeight:isMobile?68:80,background:isToday?"#fffbeb":T.cellBg}}>
                 <div style={{fontSize:isMobile?12:11,fontWeight:700,color:isToday?"#b45309":"#94a3b8",marginBottom:isMobile?3:4}}>{day}</div>
                 {shiftData.map(({sh,total})=>{
                   const low=total<3;
@@ -1043,7 +1100,7 @@ function MainApp({ currentUser, onLogout,
       <div>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,flexWrap:"wrap",gap:10}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <h2 style={{margin:0,fontSize:20,fontWeight:900,color:"#0f172a"}}>Calendario de Guardia</h2>
+            <h2 style={{margin:0,fontSize:20,fontWeight:900,color:T.textPri}}>Calendario de Guardia</h2>
             {guardROMode&&<span style={{fontSize:11,background:"#f1f5f9",color:"#64748b",padding:"2px 8px",borderRadius:20,fontWeight:600}}>Solo lectura</span>}
           </div>
           <div style={{display:"flex",alignItems:"center",gap:6,overflowX:"auto",flexShrink:0,paddingBottom:2}}>
@@ -1076,9 +1133,9 @@ function MainApp({ currentUser, onLogout,
             const isFree= shifts.length===0;
             const isToday=dstr===TODAY;
             return (
-              <div key={day} style={{border:isToday?`2px solid ${GC[gIdx]}`:"1px solid #e5e7eb",
+              <div key={day} style={{border:isToday?`2px solid ${GC[gIdx]}`:`1px solid ${T.cellBrd}`,
                 borderRadius:isMobile?8:12,padding:isMobile?"4px 3px":"5px",minHeight:isFree?(isMobile?48:55):(isMobile?64:75),
-                background:isFree?"#f9fafb":"white"}}>
+                background:isFree?T.freeBg:T.cellBg}}>
                 <div style={{fontSize:isMobile?12:11,fontWeight:700,color:isToday?GC[gIdx]:"#94a3b8",marginBottom:3}}>{day}</div>
                 {isFree&&<div style={{fontSize:isMobile?11:10,color:"#d1d5db",fontWeight:700}}>L</div>}
                 {shifts.map(sh=>{
@@ -1117,7 +1174,7 @@ function MainApp({ currentUser, onLogout,
       <div>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20,flexWrap:"wrap",gap:10}}>
           <div>
-            <h2 style={{margin:0,fontSize:20,fontWeight:900,color:"#0f172a"}}>Mi Calendario</h2>
+            <h2 style={{margin:0,fontSize:20,fontWeight:900,color:T.textPri}}>Mi Calendario</h2>
             <p style={{margin:"4px 0 0",fontSize:13,color:GC[myG],fontWeight:600}}>
               Guardia {myG+1} · {user.name} · {yos(user.sd)} años de servicio
             </p>
@@ -1145,9 +1202,9 @@ function MainApp({ currentUser, onLogout,
               && !shifts.includes(s.fromShift)
             );
             return (
-              <div key={day} style={{border:isToday?`2px solid ${GC[myG]}`:"1px solid #e5e7eb",borderRadius:isMobile?8:12,
+              <div key={day} style={{border:isToday?`2px solid ${GC[myG]}`:`1px solid ${T.cellBrd}`,borderRadius:isMobile?8:12,
                 padding:isMobile?"4px 3px":"5px",minHeight:isMobile?64:75,
-                background:shifts.length===0&&!extras.length&&!covering.length?"#f9fafb":"white"}}>
+                background:shifts.length===0&&!extras.length&&!covering.length?T.freeBg:T.cellBg}}>
                 <div style={{fontSize:isMobile?12:11,fontWeight:700,color:isToday?GC[myG]:"#94a3b8",marginBottom:3}}>{day}</div>
                 {shifts.length===0&&!extras.length&&!covering.length&&<div style={{fontSize:isMobile?11:10,color:"#d1d5db",fontWeight:700}}>Libre</div>}
                 {shifts.map(sh=>{
@@ -1293,7 +1350,7 @@ function MainApp({ currentUser, onLogout,
 
     return (
       <div>
-        <h2 style={{margin:"0 0 20px",fontSize:20,fontWeight:900,color:"#0f172a"}}>Tablón de Cambios</h2>
+        <h2 style={{margin:"0 0 20px",fontSize:20,fontWeight:900,color:T.textPri}}>Tablón de Cambios</h2>
 
         {/* ── PUBLISH REQUEST ── */}
         {!isBlocked&&(
@@ -1496,7 +1553,7 @@ function MainApp({ currentUser, onLogout,
 
     return (
       <div>
-        <h2 style={{margin:"0 0 20px",fontSize:20,fontWeight:900,color:"#0f172a"}}>Estadísticas</h2>
+        <h2 style={{margin:"0 0 20px",fontSize:20,fontWeight:900,color:T.textPri}}>Estadísticas</h2>
 
         {/* Summary */}
         <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:12,marginBottom:20}}>
@@ -1588,7 +1645,7 @@ function MainApp({ currentUser, onLogout,
     const balUser = balEditId ? users.find(u=>u.id===balEditId) : null;
     return (
     <div>
-      <h2 style={{margin:"0 0 20px",fontSize:20,fontWeight:900,color:"#0f172a"}}>Panel de Administración</h2>
+      <h2 style={{margin:"0 0 20px",fontSize:20,fontWeight:900,color:T.textPri}}>Panel de Administración</h2>
       <div style={{display:"flex",gap:8,marginBottom:20,flexWrap:"wrap"}}>
         {[{id:"pending",l:`Solicitudes${pendingCnt>0?` (${pendingCnt})`:""}`},{id:"users",l:"Usuarios"},{id:"balances",l:"Saldos"},{id:"extra",l:"Turnos Extra"},{id:"supplements",l:"Suplementos"}].map(t=>(
           <button key={t.id} onClick={()=>setAdminTab(t.id)}
@@ -1707,7 +1764,7 @@ function MainApp({ currentUser, onLogout,
 
       {adminTab==="extra"&&(
         <div>
-          <ExtraShiftForm users={users} isMobile={isMobile} onAdd={e=>{setExtraShifts(es=>[...es,e]);addNotif(e.userId,`📋 El administrador te ha asignado un turno extra ${e.shift} el día ${e.date} (comp: ${e.compensation==="economic"?"económica":"días libres"})`)}}/>
+          <ExtraShiftForm users={users} isMobile={isMobile} inp={inp} onAdd={e=>{setExtraShifts(es=>[...es,e]);addNotif(e.userId,`📋 El administrador te ha asignado un turno extra ${e.shift} el día ${e.date} (comp: ${e.compensation==="economic"?"económica":"días libres"})`)}}/>
           {extraShifts.map(e=>{
             const u=users.find(x=>x.id===e.userId);
             return (
@@ -1727,7 +1784,7 @@ function MainApp({ currentUser, onLogout,
 
       {adminTab==="supplements"&&(
         <div>
-          <SupplementForm isMobile={isMobile} onAdd={s=>setSupplements(ss=>[...ss,s])}/>
+          <SupplementForm isMobile={isMobile} inp={inp} onAdd={s=>setSupplements(ss=>[...ss,s])}/>
           {supplements.map(s=>(
             <div key={s.id} style={{...card,display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6,padding:"10px 14px",background:"#f0fdf4"}}>
               <div style={{display:"flex",gap:10,alignItems:"center"}}>
@@ -1747,7 +1804,7 @@ function MainApp({ currentUser, onLogout,
   const renderNotifs = () => (
     <div>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
-        <h2 style={{margin:0,fontSize:20,fontWeight:900,color:"#0f172a"}}>Notificaciones</h2>
+        <h2 style={{margin:0,fontSize:20,fontWeight:900,color:T.textPri}}>Notificaciones</h2>
         {myNotifs.length>0&&<button onClick={()=>setNotifs(n=>n.map(x=>({...x,read:true})))}
           style={{fontSize:12,color:"#3b82f6",background:"none",border:"none",cursor:"pointer",fontWeight:600}}>Marcar todas leídas</button>}
       </div>
@@ -1818,7 +1875,13 @@ function MainApp({ currentUser, onLogout,
               );
             })}
           </nav>
-          <div style={{padding:"8px 8px 16px"}}>
+          <div style={{padding:"8px 8px 16px",display:"flex",flexDirection:"column",gap:6}}>
+            <button onClick={toggleDark}
+              style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:10,
+                border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.04)",cursor:"pointer"}}>
+              <span style={{fontSize:14}}>{darkMode ? '☀️' : '🌙'}</span>
+              <span style={{fontSize:12,color:"#94a3b8",fontWeight:600}}>{darkMode ? 'Modo día' : 'Modo noche'}</span>
+            </button>
             <button onClick={onLogout}
               style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:10,
                 border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.04)",cursor:"pointer"}}>
@@ -1830,7 +1893,7 @@ function MainApp({ currentUser, onLogout,
       )}
 
       {/* ── MAIN CONTENT ── */}
-      <div style={{flex:1,overflowY:"auto",background:"#f8fafc",paddingBottom:isMobile?72:0}}>
+      <div style={{flex:1,overflowY:"auto",background:T.pageBg,paddingBottom:isMobile?72:0}}>
 
         {/* Mobile top bar */}
         {isMobile&&(
@@ -1844,6 +1907,11 @@ function MainApp({ currentUser, onLogout,
               </div>
             </div>
             <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <button onClick={toggleDark}
+                style={{background:"rgba(255,255,255,0.1)",border:"none",borderRadius:8,
+                  padding:"8px 10px",fontSize:16,cursor:"pointer",lineHeight:1}}>
+                {darkMode ? '☀️' : '🌙'}
+              </button>
               <Avatar name={currentUser.name} size={32} color={myG!==null?GC[myG]:"#f59e0b"}/>
               <button onClick={onLogout} style={{background:"rgba(255,255,255,0.1)",border:"none",
                 borderRadius:8,padding:"8px 14px",color:"white",fontSize:13,cursor:"pointer",fontWeight:600}}>
