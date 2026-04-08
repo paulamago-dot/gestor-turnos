@@ -139,16 +139,20 @@ function LoginScreen({ onLogin }) {
 
   const sty = {
     outer:{minHeight:"100vh",background:"linear-gradient(160deg,#0f172a 0%,#1e3558 60%,#0f172a 100%)",
-      display:"flex",alignItems:"center",justifyContent:"center",padding:16},
+      display:"flex",alignItems:"center",justifyContent:"center",
+      padding:"16px 16px env(safe-area-inset-bottom,16px)",overflowY:"auto"},
     card:{width:"100%",maxWidth:420,background:"rgba(255,255,255,0.05)",
-      backdropFilter:"blur(20px)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:20,padding:32},
-    label:{color:"#94a3b8",fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:6},
+      backdropFilter:"blur(20px)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:20,
+      padding:"20px 20px 24px"},
+    label:{color:"#94a3b8",fontSize:12,fontWeight:700,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:6},
     input:{background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.15)",color:"white",
-      width:"100%",borderRadius:12,padding:"10px 14px",fontSize:14,outline:"none",boxSizing:"border-box"},
+      width:"100%",borderRadius:12,padding:"12px 14px",
+      fontSize:16, /* ≥16px prevents iOS Safari auto-zoom */
+      outline:"none",boxSizing:"border-box"},
     btn:{background:"linear-gradient(135deg,#f59e0b,#ef4444)",width:"100%",border:"none",borderRadius:12,
-      padding:"12px 0",color:"white",fontWeight:700,fontSize:14,cursor:"pointer",marginTop:8},
+      padding:"14px 0",color:"white",fontWeight:700,fontSize:16,cursor:"pointer",marginTop:8},
     demo:{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",
-      borderRadius:10,padding:"6px 10px",color:"#64748b",fontSize:11,cursor:"pointer",textAlign:"left",width:"100%"},
+      borderRadius:10,padding:"10px 10px",color:"#64748b",fontSize:13,cursor:"pointer",textAlign:"left",width:"100%"},
   };
 
   return (
