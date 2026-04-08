@@ -131,32 +131,94 @@ function LoginScreen({ onLogin }) {
   const [email, setEmail] = useState("");
   const [pwd, setPwd]     = useState("");
   const [err, setErr]     = useState("");
+  const [mob, setMob]     = useState(window.innerWidth < 600);
+  useEffect(() => {
+    const h = () => setMob(window.innerWidth < 600);
+    window.addEventListener("resize", h);
+    return () => window.removeEventListener("resize", h);
+  }, []);
 
   const handle = () => {
     const u = INIT_USERS.find(u => u.email === email && u.pwd === pwd);
     if (u) onLogin(u); else setErr("Usuario o contraseña incorrectos");
   };
 
-  const sty = {
-    outer:{minHeight:"100vh",background:"linear-gradient(160deg,#0f172a 0%,#1e3558 60%,#0f172a 100%)",
-      display:"flex",alignItems:"center",justifyContent:"center",
-      padding:"16px 16px env(safe-area-inset-bottom,16px)",overflowY:"auto"},
-    card:{width:"100%",maxWidth:420,background:"rgba(255,255,255,0.05)",
-      backdropFilter:"blur(20px)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:20,
-      padding:"20px 20px 24px"},
-    label:{color:"#94a3b8",fontSize:12,fontWeight:700,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:6},
-    input:{background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.15)",color:"white",
-      width:"100%",borderRadius:12,padding:"12px 14px",
-      fontSize:16, /* ≥16px prevents iOS Safari auto-zoom */
-      outline:"none",boxSizing:"border-box"},
-    btn:{background:"linear-gradient(135deg,#f59e0b,#ef4444)",width:"100%",border:"none",borderRadius:12,
-      padding:"14px 0",color:"white",fontWeight:700,fontSize:16,cursor:"pointer",marginTop:8},
-    demo:{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",
-      borderRadius:10,padding:"10px 10px",color:"#64748b",fontSize:13,cursor:"pointer",textAlign:"left",width:"100%"},
+  // Mobile: full-screen form flush to edges, no card border
+  // Desktop: centered floating card
+  const inputStyle = {
+    background:"rgba(255,255,255,0.07)", border:"1px solid rgba(255,255,255,0.15)",
+    color:"white", width:"100%", borderRadius:12, padding:"13px 14px",
+    fontSize:16, outline:"none", boxSizing:"border-box",
   };
 
+  if (mob) {
+    return (
+      <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0f172a 0%,#1e3558 60%,#0f172a 100%)",
+        display:"flex",flexDirection:"column",boxSizing:"border-box",
+        padding:"0 0 env(safe-area-inset-bottom,0px)"}}>
+
+        {/* Hero header */}
+        <div style={{padding:"48px 24px 32px",textAlign:"center"}}>
+          <div style={{width:64,height:64,borderRadius:18,background:"linear-gradient(135deg,#f59e0b,#ef4444)",
+            display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 14px",fontSize:28}}>🛡️</div>
+          <h1 style={{color:"white",fontSize:28,fontWeight:900,margin:0,letterSpacing:-0.5}}>GestorTurnos</h1>
+          <p style={{color:"#64748b",fontSize:14,margin:"6px 0 0"}}>Sistema de Gestión de Guardias</p>
+        </div>
+
+        {/* Form fills rest of screen */}
+        <div style={{flex:1,background:"rgba(255,255,255,0.03)",borderTop:"1px solid rgba(255,255,255,0.08)",
+          borderRadius:"24px 24px 0 0",padding:"28px 24px 24px",display:"flex",flexDirection:"column",gap:0}}>
+
+          <div style={{marginBottom:18}}>
+            <label style={{color:"#94a3b8",fontSize:12,fontWeight:700,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:8}}>
+              Usuario
+            </label>
+            <input style={inputStyle} value={email}
+              onChange={e=>{setEmail(e.target.value);setErr("");}}
+              placeholder="Tu usuario de acceso" autoCapitalize="none" autoCorrect="off"/>
+          </div>
+
+          <div style={{marginBottom:18}}>
+            <label style={{color:"#94a3b8",fontSize:12,fontWeight:700,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:8}}>
+              Contraseña
+            </label>
+            <input type="password" style={inputStyle} value={pwd}
+              onChange={e=>{setPwd(e.target.value);setErr("");}}
+              onKeyDown={e=>e.key==="Enter"&&handle()}
+              placeholder="••••••••"/>
+          </div>
+
+          {err && <p style={{color:"#f87171",fontSize:14,textAlign:"center",margin:"0 0 10px",fontWeight:600}}>{err}</p>}
+
+          <button style={{background:"linear-gradient(135deg,#f59e0b,#ef4444)",width:"100%",border:"none",
+            borderRadius:14,padding:"16px 0",color:"white",fontWeight:700,fontSize:17,cursor:"pointer",marginBottom:24}}
+            onClick={handle}>
+            Acceder al sistema
+          </button>
+
+          <div style={{borderTop:"1px solid rgba(255,255,255,0.08)",paddingTop:20}}>
+            <p style={{color:"#475569",fontSize:12,textAlign:"center",marginBottom:12}}>Cuentas de demostración</p>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+              {[{l:"Admin",e:"admin",p:"admin"},{l:"Ana – G1",e:"ana",p:"1234"},
+                {l:"David – G3",e:"david",p:"1234"},{l:"Raúl – G5",e:"raul",p:"1234"}].map(a=>(
+                <button key={a.e}
+                  style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",
+                    borderRadius:12,padding:"12px 10px",color:"#94a3b8",fontSize:14,cursor:"pointer",textAlign:"center",width:"100%"}}
+                  onClick={()=>{setEmail(a.e);setPwd(a.p);}}>
+                  {a.l}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Desktop layout ──
   return (
-    <div style={sty.outer}>
+    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0f172a 0%,#1e3558 60%,#0f172a 100%)",
+      display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
       <div style={{width:"100%",maxWidth:420}}>
         <div style={{textAlign:"center",marginBottom:28}}>
           <div style={{width:56,height:56,borderRadius:16,background:"linear-gradient(135deg,#f59e0b,#ef4444)",
@@ -164,27 +226,33 @@ function LoginScreen({ onLogin }) {
           <h1 style={{color:"white",fontSize:26,fontWeight:900,margin:0,letterSpacing:-0.5}}>GestorTurnos</h1>
           <p style={{color:"#64748b",fontSize:13,margin:"4px 0 0"}}>Sistema de Gestión de Guardias</p>
         </div>
-        <div style={sty.card}>
+        <div style={{background:"rgba(255,255,255,0.05)",backdropFilter:"blur(20px)",
+          border:"1px solid rgba(255,255,255,0.1)",borderRadius:20,padding:"28px 28px 32px"}}>
           <div style={{marginBottom:16}}>
-            <label style={sty.label}>Usuario</label>
-            <input style={sty.input} value={email} onChange={e=>{setEmail(e.target.value);setErr("");}}
+            <label style={{color:"#94a3b8",fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:6}}>Usuario</label>
+            <input style={inputStyle} value={email} onChange={e=>{setEmail(e.target.value);setErr("");}}
               placeholder="Tu usuario de acceso"/>
           </div>
           <div style={{marginBottom:16}}>
-            <label style={sty.label}>Contraseña</label>
-            <input type="password" style={sty.input} value={pwd}
+            <label style={{color:"#94a3b8",fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:6}}>Contraseña</label>
+            <input type="password" style={inputStyle} value={pwd}
               onChange={e=>{setPwd(e.target.value);setErr("");}}
               onKeyDown={e=>e.key==="Enter"&&handle()}
               placeholder="••••••••"/>
           </div>
           {err && <p style={{color:"#f87171",fontSize:13,textAlign:"center",margin:"0 0 8px"}}>{err}</p>}
-          <button style={sty.btn} onClick={handle}>Acceder al sistema</button>
+          <button style={{background:"linear-gradient(135deg,#f59e0b,#ef4444)",width:"100%",border:"none",borderRadius:12,
+            padding:"14px 0",color:"white",fontWeight:700,fontSize:16,cursor:"pointer",marginTop:8}}
+            onClick={handle}>Acceder al sistema</button>
           <div style={{borderTop:"1px solid rgba(255,255,255,0.08)",marginTop:20,paddingTop:16}}>
             <p style={{color:"#475569",fontSize:11,textAlign:"center",marginBottom:10}}>Cuentas de demostración</p>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
               {[{l:"Admin",e:"admin",p:"admin"},{l:"Ana – G1",e:"ana",p:"1234"},
                 {l:"David – G3",e:"david",p:"1234"},{l:"Raúl – G5",e:"raul",p:"1234"}].map(a=>(
-                <button key={a.e} style={sty.demo} onClick={()=>{setEmail(a.e);setPwd(a.p);}}>
+                <button key={a.e}
+                  style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",
+                    borderRadius:10,padding:"8px 10px",color:"#64748b",fontSize:12,cursor:"pointer",textAlign:"left",width:"100%"}}
+                  onClick={()=>{setEmail(a.e);setPwd(a.p);}}>
                   {a.l}
                 </button>
               ))}
