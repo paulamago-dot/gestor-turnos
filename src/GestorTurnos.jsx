@@ -195,7 +195,7 @@ function LoginScreen({ onLogin, darkMode, toggleDark }) {
         Sistema de Gestión<br/>de Guardias
       </h1>
       <p style={{color:"#c8a94a",fontSize:large?14:13,margin:"8px 0 0",fontWeight:600,letterSpacing:0.3}}>
-        CIS Joaquín Ruiz Gimenez
+        CIS Joaquín Ruíz-Giménez Cortés
       </p>
     </div>
   );
