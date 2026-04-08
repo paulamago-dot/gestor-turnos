@@ -151,6 +151,21 @@ function LoginScreen({ onLogin }) {
     fontSize:16, outline:"none", boxSizing:"border-box",
   };
 
+  // Shared hero block used in both layouts
+  const Hero = ({ large }) => (
+    <div style={{textAlign:"center"}}>
+      <img src="/logo.svg" alt="Instituciones Penitenciarias"
+        style={{width:large?90:72,height:"auto",margin:"0 auto 14px",display:"block",
+          filter:"drop-shadow(0 4px 12px rgba(0,0,0,0.5))"}}/>
+      <h1 style={{color:"white",fontSize:large?26:22,fontWeight:900,margin:0,letterSpacing:-0.3,lineHeight:1.2}}>
+        Sistema de Gestión<br/>de Guardias
+      </h1>
+      <p style={{color:"#c8a94a",fontSize:large?14:13,margin:"8px 0 0",fontWeight:600,letterSpacing:0.3}}>
+        CIS Joaquín Ruiz Gimenez
+      </p>
+    </div>
+  );
+
   if (mob) {
     return (
       <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0f172a 0%,#1e3558 60%,#0f172a 100%)",
@@ -158,11 +173,8 @@ function LoginScreen({ onLogin }) {
         padding:"0 0 env(safe-area-inset-bottom,0px)"}}>
 
         {/* Hero header */}
-        <div style={{padding:"48px 24px 32px",textAlign:"center"}}>
-          <div style={{width:64,height:64,borderRadius:18,background:"linear-gradient(135deg,#f59e0b,#ef4444)",
-            display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 14px",fontSize:28}}>🛡️</div>
-          <h1 style={{color:"white",fontSize:28,fontWeight:900,margin:0,letterSpacing:-0.5}}>GestorTurnos</h1>
-          <p style={{color:"#64748b",fontSize:14,margin:"6px 0 0"}}>Sistema de Gestión de Guardias</p>
+        <div style={{padding:"40px 24px 28px"}}>
+          <Hero large={true}/>
         </div>
 
         {/* Form fills rest of screen */}
@@ -210,6 +222,8 @@ function LoginScreen({ onLogin }) {
               ))}
             </div>
           </div>
+
+          <p style={{color:"#334155",fontSize:11,textAlign:"center",margin:"20px 0 0"}}>v {__BUILD_DATE__}</p>
         </div>
       </div>
     );
@@ -220,18 +234,15 @@ function LoginScreen({ onLogin }) {
     <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0f172a 0%,#1e3558 60%,#0f172a 100%)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
       <div style={{width:"100%",maxWidth:420}}>
-        <div style={{textAlign:"center",marginBottom:28}}>
-          <div style={{width:56,height:56,borderRadius:16,background:"linear-gradient(135deg,#f59e0b,#ef4444)",
-            display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 12px",fontSize:24}}>🛡️</div>
-          <h1 style={{color:"white",fontSize:26,fontWeight:900,margin:0,letterSpacing:-0.5}}>GestorTurnos</h1>
-          <p style={{color:"#64748b",fontSize:13,margin:"4px 0 0"}}>Sistema de Gestión de Guardias</p>
+        <div style={{marginBottom:28}}>
+          <Hero large={false}/>
         </div>
         <div style={{background:"rgba(255,255,255,0.05)",backdropFilter:"blur(20px)",
           border:"1px solid rgba(255,255,255,0.1)",borderRadius:20,padding:"28px 28px 32px"}}>
           <div style={{marginBottom:16}}>
             <label style={{color:"#94a3b8",fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:6}}>Usuario</label>
             <input style={inputStyle} value={email} onChange={e=>{setEmail(e.target.value);setErr("");}}
-              placeholder="Tu usuario de acceso"/>
+              placeholder="Tu usuario de acceso" autoCapitalize="none" autoCorrect="off"/>
           </div>
           <div style={{marginBottom:16}}>
             <label style={{color:"#94a3b8",fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:6}}>Contraseña</label>
@@ -258,6 +269,7 @@ function LoginScreen({ onLogin }) {
               ))}
             </div>
           </div>
+          <p style={{color:"#334155",fontSize:11,textAlign:"center",margin:"16px 0 0"}}>v {__BUILD_DATE__}</p>
         </div>
       </div>
     </div>

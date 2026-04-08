@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120" width="100" height="120">
+  <!-- Shield shape -->
+  <path d="M50 4 L92 20 L92 60 C92 88 50 116 50 116 C50 116 8 88 8 60 L8 20 Z"
+        fill="#003580" stroke="#c8a94a" stroke-width="3"/>
+  <!-- Inner shield border -->
+  <path d="M50 12 L84 26 L84 60 C84 84 50 108 50 108 C50 108 16 84 16 60 L16 26 Z"
+        fill="none" stroke="#c8a94a" stroke-width="1.5"/>
+  <!-- Crown symbol -->
+  <path d="M30 38 L34 30 L38 38 L42 28 L46 38 L50 26 L54 38 L58 28 L62 38 L66 30 L70 38"
+        fill="none" stroke="#c8a94a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Horizontal bar below crown -->
+  <rect x="28" y="40" width="44" height="3" fill="#c8a94a" rx="1"/>
+  <!-- IP letters -->
+  <text x="50" y="75" font-family="serif" font-size="22" font-weight="bold"
+        fill="#c8a94a" text-anchor="middle" dominant-baseline="middle">IP</text>
+  <!-- Bottom bar -->
+  <rect x="28" y="83" width="44" height="3" fill="#c8a94a" rx="1"/>
+</svg>
