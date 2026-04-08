@@ -1826,7 +1826,10 @@ function MainApp({ currentUser, onLogout,
             display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:50}}>
             <div style={{display:"flex",alignItems:"center",gap:8}}>
               <span style={{fontSize:18}}>🛡️</span>
-              <span style={{color:"white",fontWeight:900,fontSize:14}}>GestorTurnos</span>
+              <div>
+                <span style={{color:"white",fontWeight:900,fontSize:14}}>GestorTurnos</span>
+                <div style={{color:"#475569",fontSize:9,lineHeight:1.2}}>v {__BUILD_DATE__}</div>
+              </div>
             </div>
             <div style={{display:"flex",alignItems:"center",gap:8}}>
               <Avatar name={currentUser.name} size={32} color={myG!==null?GC[myG]:"#f59e0b"}/>
