@@ -1828,7 +1828,7 @@ function MainApp({ currentUser, onLogout,
               <span style={{fontSize:18}}>🛡️</span>
               <div>
                 <span style={{color:"white",fontWeight:900,fontSize:14}}>GestorTurnos</span>
-                <div style={{color:"#475569",fontSize:9,lineHeight:1.2}}>v {__BUILD_DATE__}</div>
+                <div style={{color:"#94a3b8",fontSize:10,lineHeight:1.3}}>v {__BUILD_DATE__}</div>
               </div>
             </div>
             <div style={{display:"flex",alignItems:"center",gap:8}}>
