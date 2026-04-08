@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 const SI = {
@@ -622,15 +622,15 @@ function OfferBuilderModal({ req, fromUser, currentUser, users, userWorksShift, 
   );
 }
 
-function ExtraShiftForm({ users, onAdd }) {
+function ExtraShiftForm({ users, onAdd, isMobile }) {
   const [uid, setUid] = useState("");
   const [date, setDate] = useState("");
   const [shift, setShift] = useState("M");
   const [comp, setComp] = useState("economic");
   const inp = {border:"1px solid #e5e7eb",borderRadius:10,padding:"8px 12px",fontSize:13,outline:"none",background:"white"};
   return (
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 80px 120px",gap:8,marginBottom:12}}>
-      <select value={uid} onChange={e=>setUid(e.target.value)} style={inp}>
+    <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"1fr 1fr 80px 120px",gap:8,marginBottom:12}}>
+      <select value={uid} onChange={e=>setUid(e.target.value)} style={{...inp,gridColumn:isMobile?"1/-1":undefined}}>
         <option value="">Seleccionar funcionario</option>
         {users.filter(u=>u.id!==0).map(u=><option key={u.id} value={u.id}>{u.name} (G{u.gId+1})</option>)}
       </select>
@@ -638,32 +638,32 @@ function ExtraShiftForm({ users, onAdd }) {
       <select value={shift} onChange={e=>setShift(e.target.value)} style={inp}>
         {["M","T","N"].map(s=><option key={s}>{s}</option>)}
       </select>
-      <select value={comp} onChange={e=>setComp(e.target.value)} style={inp}>
+      <select value={comp} onChange={e=>setComp(e.target.value)} style={{...inp,gridColumn:isMobile?"1/-1":undefined}}>
         <option value="economic">💰 Económico</option>
         <option value="days">📅 Días libres</option>
       </select>
       <button onClick={()=>{if(!uid||!date)return; onAdd({id:Date.now(),userId:Number(uid),date,shift,compensation:comp}); setUid("");setDate("");}}
-        style={{gridColumn:"1/-1",background:"#0f172a",color:"white",border:"none",borderRadius:10,padding:"9px",fontWeight:700,fontSize:13,cursor:"pointer"}}>
+        style={{gridColumn:"1/-1",background:"#0f172a",color:"white",border:"none",borderRadius:10,padding:"11px",fontWeight:700,fontSize:13,cursor:"pointer"}}>
         Asignar turno extra
       </button>
     </div>
   );
 }
 
-function SupplementForm({ onAdd }) {
+function SupplementForm({ onAdd, isMobile }) {
   const [date,setDate]=useState(""); const [shift,setShift]=useState("M");
   const [amount,setAmount]=useState(""); const [note,setNote]=useState("");
   const inp = {border:"1px solid #e5e7eb",borderRadius:10,padding:"8px 12px",fontSize:13,outline:"none",background:"white"};
   return (
-    <div style={{display:"grid",gridTemplateColumns:"1fr 80px 100px 1fr",gap:8,marginBottom:12}}>
+    <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"1fr 80px 100px 1fr",gap:8,marginBottom:12}}>
       <input type="date" value={date} onChange={e=>setDate(e.target.value)} style={inp}/>
       <select value={shift} onChange={e=>setShift(e.target.value)} style={inp}>
         {["M","T","N"].map(s=><option key={s}>{s}</option>)}
       </select>
       <input type="number" value={amount} onChange={e=>setAmount(e.target.value)} placeholder="€ importe" style={inp}/>
-      <input value={note} onChange={e=>setNote(e.target.value)} placeholder="Nota (opcional)" style={inp}/>
+      <input value={note} onChange={e=>setNote(e.target.value)} placeholder="Nota (opcional)" style={{...inp,gridColumn:isMobile?"1/-1":undefined}}/>
       <button onClick={()=>{if(!date||!amount)return; onAdd({id:Date.now(),date,shift,amount:Number(amount),note}); setDate("");setAmount("");setNote("");}}
-        style={{gridColumn:"1/-1",background:"#0f172a",color:"white",border:"none",borderRadius:10,padding:"9px",fontWeight:700,fontSize:13,cursor:"pointer"}}>
+        style={{gridColumn:"1/-1",background:"#0f172a",color:"white",border:"none",borderRadius:10,padding:"11px",fontWeight:700,fontSize:13,cursor:"pointer"}}>
         Registrar suplemento
       </button>
     </div>
@@ -735,6 +735,14 @@ function MainApp({ currentUser, onLogout,
   // Tablón modals
   const [offerModal, setOfferModal]   = useState(null); // requestId B is offering on
   const [acceptModal, setAcceptModal] = useState(null); // {requestId, offerId}
+
+  // Responsive breakpoint — reactive so layout updates on resize/rotation
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
 
   const isAdmin = currentUser.role === "admin";
   const myG     = currentUser.gId; // null for admin, 0-4 for users
@@ -866,7 +874,6 @@ function MainApp({ currentUser, onLogout,
   }
 
   // ── STYLES ─────────────────────────────────────────────────────────────────
-  const isMobile = window.innerWidth < 768;
   const sidebar = {width:210,background:"linear-gradient(180deg,#0f172a 0%,#1e3558 100%)",
     flexShrink:0,display:"flex",flexDirection:"column",minHeight:"100vh"};
   const card = {background:"white",borderRadius:16,border:"1px solid #e5e7eb",padding:isMobile?14:20};
@@ -880,9 +887,9 @@ function MainApp({ currentUser, onLogout,
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
           <h2 style={{margin:0,fontSize:20,fontWeight:900,color:"#0f172a"}}>Calendario General</h2>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
-            <button onClick={prevMonth} style={{width:32,height:32,borderRadius:"50%",background:"#f1f5f9",border:"none",cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>‹</button>
-            <span style={{fontWeight:700,color:"#334155",width:130,textAlign:"center",fontSize:14}}>{MONTHS[calM]} {calY}</span>
-            <button onClick={nextMonth} style={{width:32,height:32,borderRadius:"50%",background:"#f1f5f9",border:"none",cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>›</button>
+            <button onClick={prevMonth} style={{width:isMobile?44:32,height:isMobile?44:32,borderRadius:"50%",background:"#f1f5f9",border:"none",cursor:"pointer",fontSize:isMobile?20:16,display:"flex",alignItems:"center",justifyContent:"center"}}>‹</button>
+            <span style={{fontWeight:700,color:"#334155",width:isMobile?150:130,textAlign:"center",fontSize:isMobile?15:14}}>{MONTHS[calM]} {calY}</span>
+            <button onClick={nextMonth} style={{width:isMobile?44:32,height:isMobile?44:32,borderRadius:"50%",background:"#f1f5f9",border:"none",cursor:"pointer",fontSize:isMobile?20:16,display:"flex",alignItems:"center",justifyContent:"center"}}>›</button>
           </div>
         </div>
 
@@ -910,17 +917,17 @@ function MainApp({ currentUser, onLogout,
 
             return (
               <div key={day} style={{border:isToday?`2px solid #f59e0b`:"1px solid #e5e7eb",
-                borderRadius:12,padding:"6px 5px",minHeight:80,background:isToday?"#fffbeb":"white"}}>
-                <div style={{fontSize:11,fontWeight:700,color:isToday?"#b45309":"#94a3b8",marginBottom:4}}>{day}</div>
+                borderRadius:isMobile?8:12,padding:isMobile?"4px 3px":"6px 5px",minHeight:isMobile?68:80,background:isToday?"#fffbeb":"white"}}>
+                <div style={{fontSize:isMobile?12:11,fontWeight:700,color:isToday?"#b45309":"#94a3b8",marginBottom:isMobile?3:4}}>{day}</div>
                 {shiftData.map(({sh,total})=>{
                   const low=total<3;
                   return (
                     <button key={sh} onClick={()=>setGenModal({date,shift:sh})}
                       style={{display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%",
-                        padding:"2px 4px",borderRadius:5,border:"none",marginBottom:2,cursor:"pointer",
+                        padding:isMobile?"4px 4px":"2px 4px",borderRadius:5,border:"none",marginBottom:2,cursor:"pointer",
                         background:low?"#fee2e2":SI[sh].bg,borderLeft:`3px solid ${low?"#dc2626":SI[sh].c}`}}>
-                      <span style={{fontSize:10,fontWeight:700,color:low?"#dc2626":SI[sh].t}}>{sh}</span>
-                      <span style={{fontSize:10,fontWeight:700,color:low?"#dc2626":SI[sh].t}}>{total}</span>
+                      <span style={{fontSize:isMobile?11:10,fontWeight:700,color:low?"#dc2626":SI[sh].t}}>{sh}</span>
+                      <span style={{fontSize:isMobile?11:10,fontWeight:700,color:low?"#dc2626":SI[sh].t}}>{total}</span>
                     </button>
                   );
                 })}
@@ -955,20 +962,20 @@ function MainApp({ currentUser, onLogout,
             <h2 style={{margin:0,fontSize:20,fontWeight:900,color:"#0f172a"}}>Calendario de Guardia</h2>
             {guardROMode&&<span style={{fontSize:11,background:"#f1f5f9",color:"#64748b",padding:"2px 8px",borderRadius:20,fontWeight:600}}>Solo lectura</span>}
           </div>
-          <div style={{display:"flex",alignItems:"center",gap:6}}>
+          <div style={{display:"flex",alignItems:"center",gap:6,overflowX:"auto",flexShrink:0,paddingBottom:2}}>
             {[0,1,2,3,4].map(g=>(
               <button key={g} onClick={()=>{
                 if(isAdmin){setGVI(g);setGROM(false);}
                 else if(g===myG){setGVI(g);setGROM(false);}
                 else{setGVI(g);setGROM(true);}
-              }} style={{padding:"4px 10px",borderRadius:8,border:"none",cursor:"pointer",fontWeight:700,fontSize:11,
+              }} style={{padding:isMobile?"6px 12px":"4px 10px",borderRadius:8,border:"none",cursor:"pointer",fontWeight:700,fontSize:isMobile?13:11,flexShrink:0,
                 background:gIdx===g?GC[g]:GC[g]+"20",color:gIdx===g?"white":GC[g]}}>G{g+1}</button>
             ))}
           </div>
           <div style={{display:"flex",alignItems:"center",gap:6}}>
-            <button onClick={prevMonth} style={{width:30,height:30,borderRadius:"50%",background:"#f1f5f9",border:"none",cursor:"pointer",fontSize:15}}>‹</button>
-            <span style={{fontWeight:700,color:"#334155",width:110,textAlign:"center",fontSize:13}}>{MONTHS[calM]} {calY}</span>
-            <button onClick={nextMonth} style={{width:30,height:30,borderRadius:"50%",background:"#f1f5f9",border:"none",cursor:"pointer",fontSize:15}}>›</button>
+            <button onClick={prevMonth} style={{width:isMobile?44:30,height:isMobile?44:30,borderRadius:"50%",background:"#f1f5f9",border:"none",cursor:"pointer",fontSize:isMobile?20:15,display:"flex",alignItems:"center",justifyContent:"center"}}>‹</button>
+            <span style={{fontWeight:700,color:"#334155",width:isMobile?130:110,textAlign:"center",fontSize:isMobile?14:13}}>{MONTHS[calM]} {calY}</span>
+            <button onClick={nextMonth} style={{width:isMobile?44:30,height:isMobile?44:30,borderRadius:"50%",background:"#f1f5f9",border:"none",cursor:"pointer",fontSize:isMobile?20:15,display:"flex",alignItems:"center",justifyContent:"center"}}>›</button>
           </div>
         </div>
 
@@ -986,10 +993,10 @@ function MainApp({ currentUser, onLogout,
             const isToday=dstr===TODAY;
             return (
               <div key={day} style={{border:isToday?`2px solid ${GC[gIdx]}`:"1px solid #e5e7eb",
-                borderRadius:12,padding:"5px",minHeight:isFree?55:75,
+                borderRadius:isMobile?8:12,padding:isMobile?"4px 3px":"5px",minHeight:isFree?(isMobile?48:55):(isMobile?64:75),
                 background:isFree?"#f9fafb":"white"}}>
-                <div style={{fontSize:11,fontWeight:700,color:isToday?GC[gIdx]:"#94a3b8",marginBottom:3}}>{day}</div>
-                {isFree&&<div style={{fontSize:10,color:"#d1d5db",fontWeight:700}}>L</div>}
+                <div style={{fontSize:isMobile?12:11,fontWeight:700,color:isToday?GC[gIdx]:"#94a3b8",marginBottom:3}}>{day}</div>
+                {isFree&&<div style={{fontSize:isMobile?11:10,color:"#d1d5db",fontWeight:700}}>L</div>}
                 {shifts.map(sh=>{
                   const total = countW(gIdx,date,sh);
                   const low   = total<3;
@@ -997,16 +1004,16 @@ function MainApp({ currentUser, onLogout,
                   return (
                     <button key={sh} onClick={()=>setGuardModal({date,shift:sh,gIdx})}
                       style={{display:"flex",alignItems:"center",justifyContent:"space-between",
-                        width:"100%",padding:"3px 4px",borderRadius:6,border:"none",
+                        width:"100%",padding:isMobile?"5px 4px":"3px 4px",borderRadius:6,border:"none",
                         marginBottom:3,cursor:"pointer",
                         background:low?"#fee2e2":SI[sh].bg,
                         borderLeft:`3px solid ${low?"#ef4444":SI[sh].c}`}}>
-                      <span style={{fontSize:9,fontWeight:700,color:low?"#dc2626":SI[sh].t}}>
+                      <span style={{fontSize:isMobile?11:9,fontWeight:700,color:low?"#dc2626":SI[sh].t}}>
                         {sh}{low?" ⚠️":""}
                       </span>
                       <div style={{display:"flex",alignItems:"center",gap:3}}>
-                        {supp&&<span style={{fontSize:8,color:"#16a34a",fontWeight:700}}>€</span>}
-                        <span style={{fontSize:9,fontWeight:700,color:low?"#dc2626":SI[sh].t}}>{total}</span>
+                        {supp&&<span style={{fontSize:isMobile?10:8,color:"#16a34a",fontWeight:700}}>€</span>}
+                        <span style={{fontSize:isMobile?11:9,fontWeight:700,color:low?"#dc2626":SI[sh].t}}>{total}</span>
                       </div>
                     </button>
                   );
@@ -1032,16 +1039,16 @@ function MainApp({ currentUser, onLogout,
             </p>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:6}}>
-            <button onClick={prevMonth} style={{width:30,height:30,borderRadius:"50%",background:"#f1f5f9",border:"none",cursor:"pointer",fontSize:15}}>‹</button>
-            <span style={{fontWeight:700,color:"#334155",width:110,textAlign:"center",fontSize:13}}>{MONTHS[calM]} {calY}</span>
-            <button onClick={nextMonth} style={{width:30,height:30,borderRadius:"50%",background:"#f1f5f9",border:"none",cursor:"pointer",fontSize:15}}>›</button>
+            <button onClick={prevMonth} style={{width:isMobile?44:30,height:isMobile?44:30,borderRadius:"50%",background:"#f1f5f9",border:"none",cursor:"pointer",fontSize:isMobile?20:15,display:"flex",alignItems:"center",justifyContent:"center"}}>‹</button>
+            <span style={{fontWeight:700,color:"#334155",width:isMobile?130:110,textAlign:"center",fontSize:isMobile?14:13}}>{MONTHS[calM]} {calY}</span>
+            <button onClick={nextMonth} style={{width:isMobile?44:30,height:isMobile?44:30,borderRadius:"50%",background:"#f1f5f9",border:"none",cursor:"pointer",fontSize:isMobile?20:15,display:"flex",alignItems:"center",justifyContent:"center"}}>›</button>
           </div>
         </div>
 
-        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3,marginBottom:3}}>
-          {WDAYS.map(d=><div key={d} style={{textAlign:"center",fontSize:11,fontWeight:700,color:"#94a3b8",padding:"4px 0"}}>{d}</div>)}
+        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:isMobile?2:3,marginBottom:3}}>
+          {WDAYS.map(d=><div key={d} style={{textAlign:"center",fontSize:isMobile?12:11,fontWeight:700,color:"#94a3b8",padding:"4px 0"}}>{d}</div>)}
         </div>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3,marginBottom:20}}>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:isMobile?2:3,marginBottom:20}}>
           {Array(fdow(calY,calM)).fill(null).map((_,i)=><div key={`b${i}`}/>)}
           {Array(dim(calY,calM)).fill(null).map((_,i)=>{
             const day=i+1; const date=new Date(calY,calM,day); const dstr=ds(date);
@@ -1054,11 +1061,11 @@ function MainApp({ currentUser, onLogout,
               && !shifts.includes(s.fromShift)
             );
             return (
-              <div key={day} style={{border:isToday?`2px solid ${GC[myG]}`:"1px solid #e5e7eb",borderRadius:12,
-                padding:"5px",minHeight:75,
+              <div key={day} style={{border:isToday?`2px solid ${GC[myG]}`:"1px solid #e5e7eb",borderRadius:isMobile?8:12,
+                padding:isMobile?"4px 3px":"5px",minHeight:isMobile?64:75,
                 background:shifts.length===0&&!extras.length&&!covering.length?"#f9fafb":"white"}}>
-                <div style={{fontSize:11,fontWeight:700,color:isToday?GC[myG]:"#94a3b8",marginBottom:3}}>{day}</div>
-                {shifts.length===0&&!extras.length&&!covering.length&&<div style={{fontSize:10,color:"#d1d5db",fontWeight:700}}>Libre</div>}
+                <div style={{fontSize:isMobile?12:11,fontWeight:700,color:isToday?GC[myG]:"#94a3b8",marginBottom:3}}>{day}</div>
+                {shifts.length===0&&!extras.length&&!covering.length&&<div style={{fontSize:isMobile?11:10,color:"#d1d5db",fontWeight:700}}>Libre</div>}
                 {shifts.map(sh=>{
                   const abs=absences.find(a=>a.userId===user.id&&a.date===dstr&&a.shift===sh);
                   const swA = swaps.find(s=>s.status==="approved"&&s.fromId===user.id&&s.fromDate===dstr&&s.fromShift===sh);
@@ -1074,15 +1081,15 @@ function MainApp({ currentUser, onLogout,
                   const pillBg  = abs ? "#dcfce7" : swA ? "#f1f5f9" : "#d1fae5";
                   const pillCol = abs ? "#15803d" : swA ? "#6b7280"  : "#065f46";
                   return (
-                    <div key={sh} style={{borderRadius:6,padding:"3px 5px",marginBottom:3,
+                    <div key={sh} style={{borderRadius:6,padding:isMobile?"5px 5px":"3px 5px",marginBottom:3,
                       background:cellBg, borderLeft:`3px solid ${cellBdr}`}}>
                       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:2}}>
-                        <span style={{fontSize:9,fontWeight:700,color:cellTxt}}>{sh}</span>
-                        {supp&&<span style={{fontSize:8,color:"#15803d",fontWeight:700}}>+{supp.amount}€</span>}
+                        <span style={{fontSize:isMobile?12:9,fontWeight:700,color:cellTxt}}>{sh}</span>
+                        {supp&&<span style={{fontSize:isMobile?10:8,color:"#15803d",fontWeight:700}}>+{supp.amount}€</span>}
                       </div>
                       <span
                         onClick={swA ? ()=>setSwapModal({swap:swA,role:"from"}) : undefined}
-                        style={{display:"inline-block",fontSize:8,fontWeight:700,marginTop:1,
+                        style={{display:"inline-block",fontSize:isMobile?10:8,fontWeight:700,marginTop:1,
                           padding:"1px 5px",borderRadius:4,background:pillBg,color:pillCol,
                           cursor:swA?"pointer":"default",
                           textDecoration:swA?"underline":"none"}}>
@@ -1090,7 +1097,7 @@ function MainApp({ currentUser, onLogout,
                       </span>
                       {!abs&&!swA&&(
                         <button onClick={()=>setAbsModal({date,shift:sh})}
-                          style={{fontSize:8,color:cellTxt,background:"none",border:"none",cursor:"pointer",padding:"1px 0",fontWeight:700,display:"block"}}>
+                          style={{fontSize:isMobile?10:8,color:cellTxt,background:"none",border:"none",cursor:"pointer",padding:isMobile?"3px 0":"1px 0",fontWeight:700,display:"block"}}>
                           + solicitar libre
                         </button>
                       )}
@@ -1208,7 +1215,7 @@ function MainApp({ currentUser, onLogout,
         {!isBlocked&&(
           <div style={{...card,marginBottom:20}}>
             <h3 style={{margin:"0 0 14px",fontSize:15,fontWeight:700,color:"#1e293b"}}>Solicitar cobertura de turno</h3>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 100px 1fr",gap:8,marginBottom:8}}>
+            <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 100px 1fr",gap:8,marginBottom:8}}>
               <input type="date" value={tDate} onChange={e=>setTDate(e.target.value)} style={inp}/>
               <select value={tShift} onChange={e=>setTShift(e.target.value)} style={inp}>
                 {["M","T","N"].map(s=><option key={s} value={s}>{s} – {SI[s].l}</option>)}
@@ -1616,7 +1623,7 @@ function MainApp({ currentUser, onLogout,
 
       {adminTab==="extra"&&(
         <div>
-          <ExtraShiftForm users={users} onAdd={e=>{setExtraShifts(es=>[...es,e]);addNotif(e.userId,`📋 El administrador te ha asignado un turno extra ${e.shift} el día ${e.date} (comp: ${e.compensation==="economic"?"económica":"días libres"})`)}}/>
+          <ExtraShiftForm users={users} isMobile={isMobile} onAdd={e=>{setExtraShifts(es=>[...es,e]);addNotif(e.userId,`📋 El administrador te ha asignado un turno extra ${e.shift} el día ${e.date} (comp: ${e.compensation==="economic"?"económica":"días libres"})`)}}/>
           {extraShifts.map(e=>{
             const u=users.find(x=>x.id===e.userId);
             return (
@@ -1636,7 +1643,7 @@ function MainApp({ currentUser, onLogout,
 
       {adminTab==="supplements"&&(
         <div>
-          <SupplementForm onAdd={s=>setSupplements(ss=>[...ss,s])}/>
+          <SupplementForm isMobile={isMobile} onAdd={s=>setSupplements(ss=>[...ss,s])}/>
           {supplements.map(s=>(
             <div key={s.id} style={{...card,display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6,padding:"10px 14px",background:"#f0fdf4"}}>
               <div style={{display:"flex",gap:10,alignItems:"center"}}>
@@ -1750,9 +1757,9 @@ function MainApp({ currentUser, onLogout,
               <span style={{color:"white",fontWeight:900,fontSize:14}}>GestorTurnos</span>
             </div>
             <div style={{display:"flex",alignItems:"center",gap:8}}>
-              <Avatar name={currentUser.name} size={28} color={myG!==null?GC[myG]:"#f59e0b"}/>
+              <Avatar name={currentUser.name} size={32} color={myG!==null?GC[myG]:"#f59e0b"}/>
               <button onClick={onLogout} style={{background:"rgba(255,255,255,0.1)",border:"none",
-                borderRadius:8,padding:"5px 10px",color:"white",fontSize:11,cursor:"pointer",fontWeight:600}}>
+                borderRadius:8,padding:"8px 14px",color:"white",fontSize:13,cursor:"pointer",fontWeight:600}}>
                 Salir
               </button>
             </div>
@@ -1782,18 +1789,18 @@ function MainApp({ currentUser, onLogout,
             return (
               <button key={item.id} onClick={()=>setView(item.id)}
                 style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
-                  padding:"8px 2px",border:"none",cursor:"pointer",position:"relative",
+                  minHeight:56,padding:"6px 2px",border:"none",cursor:"pointer",position:"relative",
                   background:active?"rgba(245,158,11,0.15)":"transparent",
                   borderTop:active?"2px solid #f59e0b":"2px solid transparent"}}>
-                <span style={{fontSize:16,lineHeight:1}}>{item.ico}</span>
-                <span style={{fontSize:9,fontWeight:active?700:500,
-                  color:active?"#f59e0b":"#64748b",marginTop:2,whiteSpace:"nowrap",
+                <span style={{fontSize:20,lineHeight:1}}>{item.ico}</span>
+                <span style={{fontSize:10,fontWeight:active?700:500,
+                  color:active?"#f59e0b":"#64748b",marginTop:3,whiteSpace:"nowrap",
                   overflow:"hidden",maxWidth:"100%",textOverflow:"ellipsis",padding:"0 2px"}}>
                   {item.lbl.split(" ")[0]}
                 </span>
                 {badge>0&&(
-                  <span style={{position:"absolute",top:6,right:"50%",transform:"translateX(8px)",
-                    fontSize:9,background:"#ef4444",color:"white",width:16,height:16,
+                  <span style={{position:"absolute",top:6,right:"50%",transform:"translateX(10px)",
+                    fontSize:9,background:"#ef4444",color:"white",width:17,height:17,
                     borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>
                     {badge}
                   </span>
