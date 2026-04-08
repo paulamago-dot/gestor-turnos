@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(vercel --version)",
+      "Bash(npm install:*)",
+      "Bash(winget install:*)",
+      "Bash(npm create:*)",
+      "Bash(cp:*)",
+      "Bash(node -e \"const p=require\\('./node_modules/vite-plugin-pwa/package.json'\\);console.log\\(p.version\\)\")",
+      "Bash(node generate-icons.mjs)",
+      "Bash(npm run:*)",
+      "Bash(export PATH=\"$PATH:/c/Program Files/GitHub CLI\")",
+      "Bash(gh auth:*)",
+      "Bash(git config:*)"
+    ]
+  }
+}
