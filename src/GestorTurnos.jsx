@@ -961,6 +961,14 @@ function MainApp({ currentUser, onLogout,
   // Admin tab
   const [adminTab, setAdminTab] = useState("pending");
   const [balEditId, setBalEditId] = useState(null);
+  // User CRUD form: null = closed, object = open
+  const [userForm, setUserForm] = useState(null);
+
+  // ── REFRESH USERS FROM SUPABASE ──────────────────────────────────────────
+  async function refreshUsers() {
+    const { data, error } = await supabase.from('usuarios').select('*');
+    if (!error && data) setUsers(data.map(mapUser));
+  }
   // Tablón — publish form
   const [tDate, setTDate]   = useState("");
   const [tShift, setTShift] = useState("M");
@@ -1779,38 +1787,158 @@ function MainApp({ currentUser, onLogout,
         ))
       )}
 
-      {adminTab==="users"&&[0,1,2,3,4].map(g=>(
-        <div key={g} style={{marginBottom:16}}>
-          <div style={{fontSize:13,fontWeight:800,color:GC[g],marginBottom:6,display:"flex",alignItems:"center",gap:8}}>
-            Guardia {g+1}
-            <span style={{fontSize:11,color:T.textMut,fontWeight:400}}>({users.filter(u=>u.gId===g&&u.id!==0).length} funcionarios)</span>
-          </div>
-          {users.filter(u=>u.gId===g&&u.id!==0).map(u=>(
-            <div key={u.id} style={{...card,display:"flex",alignItems:"center",justifyContent:"space-between",
-              marginBottom:4,padding:"10px 14px",borderLeft:`4px solid ${GC[g]}`}}>
-              <div style={{display:"flex",alignItems:"center",gap:10}}>
-                <Avatar name={u.name} size={28} color={GC[g]}/>
+      {adminTab==="users"&&(
+        <div>
+          {/* ── FORM: crear / editar ── */}
+          {userForm!==null&&(
+            <div style={{...card,marginBottom:20,borderLeft:`4px solid ${T.accent}`}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+                <h3 style={{margin:0,fontSize:15,fontWeight:700,color:T.cardHead}}>
+                  {userForm.mode==="create"?"Nuevo usuario":"Editar usuario"}
+                </h3>
+                <button onClick={()=>setUserForm(null)}
+                  style={{background:"none",border:"none",fontSize:22,cursor:"pointer",color:T.textMut,lineHeight:1}}>×</button>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:10,marginBottom:12}}>
+                {[
+                  {label:"NOMBRE COMPLETO",  field:"name",    type:"text",     placeholder:"Nombre Apellidos"},
+                  {label:"USUARIO / EMAIL",   field:"email",   type:"text",     placeholder:"nombre.apellido"},
+                  {label:`CONTRASEÑA${userForm.mode==="edit"?" (vacío = sin cambio)":""}`,
+                                             field:"pwd",     type:"password", placeholder:userForm.mode==="edit"?"••• sin cambio •••":"Contraseña"},
+                  {label:"Nº TARJETA",       field:"cardNum", type:"text",     placeholder:"G1-001"},
+                  {label:"FECHA DE INGRESO", field:"sd",      type:"date",     placeholder:""},
+                ].map(({label,field,type,placeholder})=>(
+                  <div key={field}>
+                    <label style={{fontSize:11,color:T.textSec,fontWeight:700,textTransform:"uppercase",letterSpacing:0.5,display:"block",marginBottom:5}}>
+                      {label}
+                    </label>
+                    <input type={type} value={userForm[field]}
+                      onChange={e=>setUserForm(f=>({...f,[field]:e.target.value}))}
+                      placeholder={placeholder} style={inp} autoCapitalize="none"/>
+                  </div>
+                ))}
                 <div>
-                  <span style={{fontSize:13,fontWeight:600,color:T.textPri}}>{u.name}</span>
-                  <span style={{fontSize:11,color:T.textMut,marginLeft:8}}>{u.cardNum}</span>
+                  <label style={{fontSize:11,color:T.textSec,fontWeight:700,textTransform:"uppercase",letterSpacing:0.5,display:"block",marginBottom:5}}>
+                    GUARDIA
+                  </label>
+                  <select value={userForm.gId} onChange={e=>setUserForm(f=>({...f,gId:e.target.value}))} style={inp}>
+                    <option value="">-- Seleccionar guardia --</option>
+                    {[0,1,2,3,4].map(g=><option key={g} value={g}>Guardia {g+1}</option>)}
+                  </select>
                 </div>
               </div>
-              <div style={{display:"flex",alignItems:"center",gap:8}}>
-                <span style={{fontSize:11,color:T.textSec}}>{yos(u.sd)} años</span>
-                <button onClick={()=>{setAdminTab("balances");setBalEditId(u.id);}}
-                  style={{fontSize:10,background:"#f0f9ff",color:"#0284c7",border:"none",borderRadius:8,padding:"4px 10px",cursor:"pointer",fontWeight:600}}>
-                  Editar saldo
+
+              {userForm.error&&(
+                <p style={{color:"#ef4444",fontSize:12,margin:"0 0 12px",fontWeight:600,
+                  background:"rgba(239,68,68,0.08)",padding:"8px 12px",borderRadius:8}}>
+                  ⚠ {userForm.error}
+                </p>
+              )}
+
+              <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                <button
+                  disabled={userForm.saving||!userForm.name||!userForm.email||(userForm.mode==="create"&&!userForm.pwd)||userForm.gId===""}
+                  onClick={async()=>{
+                    setUserForm(f=>({...f,saving:true,error:""}));
+                    const payload={
+                      name:     userForm.name.trim(),
+                      email:    userForm.email.trim(),
+                      role:     "user",
+                      g_id:     userForm.gId!==""?Number(userForm.gId):null,
+                      card_num: userForm.cardNum.trim(),
+                      sd:       userForm.sd||null,
+                      bal:      {},
+                    };
+                    if(userForm.pwd) payload.pwd=userForm.pwd;
+                    let dbErr;
+                    if(userForm.mode==="create"){
+                      ({error:dbErr}=await supabase.from("usuarios").insert(payload));
+                    } else {
+                      ({error:dbErr}=await supabase.from("usuarios").update(payload).eq("id",userForm.id));
+                    }
+                    if(dbErr){
+                      setUserForm(f=>({...f,saving:false,error:dbErr.message}));
+                    } else {
+                      await refreshUsers();
+                      setUserForm(null);
+                    }
+                  }}
+                  style={{background:T.btnPri,color:"white",border:"none",borderRadius:10,
+                    padding:"10px 22px",fontWeight:700,fontSize:13,cursor:"pointer",
+                    opacity:(userForm.saving||!userForm.name||!userForm.email||(userForm.mode==="create"&&!userForm.pwd)||userForm.gId==="")?0.5:1}}>
+                  {userForm.saving?"Guardando…":userForm.mode==="create"?"Crear usuario":"Guardar cambios"}
                 </button>
-                <button onClick={()=>setAbsModal({date:new Date(),shift:"M",targetUserId:u.id,gIdx:u.gId})}
-                  style={{fontSize:10,background:"#fef9c3",color:"#92400e",border:"none",borderRadius:8,padding:"4px 10px",cursor:"pointer",fontWeight:600}}>
-                  Marcar ausencia
+                <button onClick={()=>setUserForm(null)}
+                  style={{background:T.subBg,color:T.textSec,border:`1px solid ${T.cardBrd}`,
+                    borderRadius:10,padding:"10px 16px",fontWeight:600,fontSize:13,cursor:"pointer"}}>
+                  Cancelar
                 </button>
-                <span style={{fontSize:10,background:"#dcfce7",color:"#16a34a",padding:"2px 8px",borderRadius:20,fontWeight:600}}>Activo</span>
               </div>
+            </div>
+          )}
+
+          {/* ── BOTÓN NUEVO USUARIO ── */}
+          {userForm===null&&(
+            <button
+              onClick={()=>setUserForm({mode:"create",id:null,name:"",email:"",pwd:"",gId:"",cardNum:"",sd:"",saving:false,error:""})}
+              style={{background:T.btnPri,color:"white",border:"none",borderRadius:12,
+                padding:"10px 20px",fontWeight:700,fontSize:13,cursor:"pointer",
+                marginBottom:20,display:"flex",alignItems:"center",gap:6}}>
+              + Nuevo usuario
+            </button>
+          )}
+
+          {/* ── LISTA POR GUARDIA ── */}
+          {[0,1,2,3,4].map(g=>(
+            <div key={g} style={{marginBottom:16}}>
+              <div style={{fontSize:13,fontWeight:800,color:GC[g],marginBottom:6,display:"flex",alignItems:"center",gap:8}}>
+                Guardia {g+1}
+                <span style={{fontSize:11,color:T.textMut,fontWeight:400}}>
+                  ({users.filter(u=>u.gId===g&&u.id!==0).length} funcionarios)
+                </span>
+              </div>
+              {users.filter(u=>u.gId===g&&u.id!==0).map(u=>(
+                <div key={u.id} style={{...card,display:"flex",alignItems:"center",justifyContent:"space-between",
+                  marginBottom:4,padding:"10px 14px",borderLeft:`4px solid ${GC[g]}`,flexWrap:"wrap",gap:8}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10}}>
+                    <Avatar name={u.name} size={28} color={GC[g]}/>
+                    <div>
+                      <span style={{fontSize:13,fontWeight:600,color:T.textPri}}>{u.name}</span>
+                      <span style={{fontSize:11,color:T.textMut,marginLeft:8}}>{u.email}</span>
+                      {u.cardNum&&<span style={{fontSize:11,color:T.textMut,marginLeft:6}}>{u.cardNum}</span>}
+                    </div>
+                  </div>
+                  <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+                    <span style={{fontSize:11,color:T.textSec}}>{yos(u.sd)} años</span>
+                    <button onClick={()=>{setAdminTab("balances");setBalEditId(u.id);}}
+                      style={{fontSize:10,background:"rgba(2,132,199,0.12)",color:"#0284c7",border:"none",borderRadius:8,padding:"4px 10px",cursor:"pointer",fontWeight:600}}>
+                      Saldo
+                    </button>
+                    <button onClick={()=>setAbsModal({date:new Date(),shift:"M",targetUserId:u.id,gIdx:u.gId})}
+                      style={{fontSize:10,background:"rgba(202,138,4,0.12)",color:"#ca8a04",border:"none",borderRadius:8,padding:"4px 10px",cursor:"pointer",fontWeight:600}}>
+                      Ausencia
+                    </button>
+                    <button onClick={()=>setUserForm({mode:"edit",id:u.id,name:u.name,email:u.email,pwd:"",
+                      gId:u.gId!=null?String(u.gId):"",cardNum:u.cardNum??"",sd:u.sd??"",saving:false,error:""})}
+                      style={{fontSize:10,background:"rgba(99,102,241,0.15)",color:"#6366f1",border:"none",borderRadius:8,padding:"4px 10px",cursor:"pointer",fontWeight:600}}>
+                      Editar
+                    </button>
+                    <button onClick={async()=>{
+                      if(!window.confirm(`¿Eliminar a ${u.name}?\nEsta acción no se puede deshacer.`)) return;
+                      const {error:dbErr}=await supabase.from("usuarios").delete().eq("id",u.id);
+                      if(dbErr){ alert("Error al eliminar: "+dbErr.message); return; }
+                      await refreshUsers();
+                    }}
+                      style={{fontSize:10,background:"rgba(239,68,68,0.12)",color:"#ef4444",border:"none",borderRadius:8,padding:"4px 10px",cursor:"pointer",fontWeight:600}}>
+                      Eliminar
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           ))}
         </div>
-      ))}
+      )}
 
       {adminTab==="balances"&&(
         <div>
