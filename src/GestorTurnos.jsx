@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { supabase } from './supabaseClient.js';
 
 // ─── THEMES ───────────────────────────────────────────────────────────────────
 const THEME = {
@@ -181,7 +182,7 @@ function StatusDot({ color }) {
 }
 
 // ─── LOGIN ────────────────────────────────────────────────────────────────────
-function LoginScreen({ onLogin, darkMode, toggleDark }) {
+function LoginScreen({ onLogin, darkMode, toggleDark, users }) {
   const [email, setEmail] = useState("");
   const [pwd, setPwd]     = useState("");
   const [err, setErr]     = useState("");
@@ -193,7 +194,7 @@ function LoginScreen({ onLogin, darkMode, toggleDark }) {
   }, []);
 
   const handle = () => {
-    const u = INIT_USERS.find(u => u.email === email && u.pwd === pwd);
+    const u = users.find(u => u.email === email && u.pwd === pwd);
     if (u) onLogin(u); else setErr("Usuario o contraseña incorrectos");
   };
 
@@ -844,10 +845,27 @@ function SupplementForm({ onAdd, isMobile, inp, T }) {
   );
 }
 
+// ─── USER ROW MAPPER (Supabase → app format) ──────────────────────────────────
+function mapUser(row) {
+  return {
+    id:      row.id,
+    name:    row.name,
+    email:   row.email,
+    pwd:     row.pwd ?? row.password ?? "",
+    role:    row.role ?? "user",
+    gId:     row.gId ?? row.g_id ?? null,
+    cardNum: row.cardNum ?? row.card_num ?? "",
+    sd:      row.sd ?? row.start_date ?? "2000-01-01",
+    bal:     row.bal ?? row.balance ?? {},
+  };
+}
+
 // ─── LOGIN SHELL — shared state lives here so it survives user switches ───────
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('gt-theme') === 'dark');
+  const [loading, setLoading]   = useState(true);
+  const [dbError, setDbError]   = useState(null);
 
   function toggleDark() {
     setDarkMode(d => {
@@ -861,12 +879,44 @@ export default function App() {
   const [pending, setPending]         = useState(INIT_PENDING);
   const [absences, setAbsences]       = useState([]);
   const [swaps, setSwaps]             = useState([]);
-  const [swapRequests, setSwapRequests] = useState([]); // unified request system
+  const [swapRequests, setSwapRequests] = useState([]);
   const [extraShifts, setExtraShifts] = useState([]);
   const [supplements, setSupplements] = useState([]);
   const [notifs, setNotifs]           = useState([]);
 
-  if (!currentUser) return <LoginScreen onLogin={u => setCurrentUser(u)} darkMode={darkMode} toggleDark={toggleDark}/>;
+  // ── LOAD USERS FROM SUPABASE ──────────────────────────────────────────────
+  useEffect(() => {
+    supabase
+      .from('usuarios')
+      .select('*')
+      .then(({ data, error }) => {
+        if (error) {
+          console.error('Supabase error:', error.message);
+          setDbError(error.message);
+          // Keep INIT_USERS as fallback so the app stays usable
+        } else if (data && data.length > 0) {
+          setUsers(data.map(mapUser));
+        }
+        setLoading(false);
+      });
+  }, []);
+
+  const T = THEME[darkMode ? 'dark' : 'light'];
+
+  if (loading) return (
+    <div style={{minHeight:"100vh",background:T.navBg,display:"flex",flexDirection:"column",
+      alignItems:"center",justifyContent:"center",gap:16}}>
+      <img src="/logo.svg" alt="logo" style={{width:72,opacity:0.9,filter:"drop-shadow(0 4px 16px rgba(0,0,0,0.4))"}}/>
+      <div style={{color:"white",fontWeight:700,fontSize:15,letterSpacing:0.5}}>Cargando…</div>
+      {dbError && (
+        <div style={{color:"#fca5a5",fontSize:12,maxWidth:320,textAlign:"center",padding:"0 24px"}}>
+          Error de conexión: {dbError}. Usando datos locales.
+        </div>
+      )}
+    </div>
+  );
+
+  if (!currentUser) return <LoginScreen onLogin={u => setCurrentUser(u)} darkMode={darkMode} toggleDark={toggleDark} users={users}/>;
   return (
     <MainApp
       currentUser={currentUser}
